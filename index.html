@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kickbase Meister-Coach - Lokale KI (Ollama)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { background-color: #0b0f19; color: #f8fafc; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-black text-emerald-400 flex items-center gap-2">
+                    ⚽ Kickbase Meister-Coach 
+                    <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-800 px-2.5 py-1 rounded-full">100% Kostenlos & Lokal (Ollama)</span>
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Lokal betriebene KI-Analyse für deinen Kickbase-Kader ohne Cloud-Kosten.</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                <input type="text" id="ollamaModel" value="llama3" placeholder="Modell (z.B. llama3)" class="bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500 w-full sm:w-40">
+                <button onclick="saveOllamaSettings()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap shadow-md">Modell speichern</button>
+            </div>
+        </header>
+
+        <!-- Lokaler Ollama Status Hinweis -->
+        <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-xl mb-6 text-xs text-slate-400 flex items-center justify-between">
+            <div>
+                <span class="font-bold text-amber-400">Wichtig für lokale KI:</span> Stelle sicher, dass <a href="https://ollama.com" target="_blank" class="underline text-emerald-400">Ollama</a> auf deinem PC läuft (Standard-URL: <code class="bg-slate-950 px-1.5 py-0.5 rounded text-slate-200">http://localhost:11434</code>).
+            </div>
+            <div id="connectionStatus" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-medium">Status: Bereit</div>
+        </div>
+
+        <!-- Hauptbereich Grid (Ergebnisse & Analysen) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            
+            <!-- Sektion 1: Kader & Markt Rohdaten -->
+            <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-2 text-slate-200 flex items-center gap-2">
+                        <span>📊</span> Kader & Markt-Daten (JSON oder Text)
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-4">Füge hier die Daten aus deinem Kickbase-Account oder Transfermarkt ein.</p>
+                    <textarea id="marketData" rows="10" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-slate-300 focus:outline-none focus:border-emerald-500 leading-relaxed font-mono" placeholder="Kaderdaten / Marktübersicht hier einfügen..."></textarea>
+                </div>
+                <button onclick="analyzeManualData()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition text-sm text-white shadow-lg">
+                    Daten lokal durch Ollama analysieren
+                </button>
+            </div>
+
+            <!-- Sektion 2: Taktischer KI-Rat -->
+            <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-2 text-slate-200 flex items-center gap-2">
+                        <span>💡</span> Lokaler KI-Expertenrat
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-4">Empfehlungen basierend auf deinem Modell.</p>
+                    <div id="aiOutput" class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-sm text-slate-300 h-64 overflow-y-auto whitespace-pre-line leading-relaxed">
+                        Noch keine Analyse vorhanden. Klicke auf "Daten lokal durch Ollama analysieren".
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mt-4 pt-2 border-t border-slate-800/60">
+                    <span class="text-xs text-slate-500">Lokaler Speicher aktiv</span>
+                    <button onclick="clearStorage()" class="text-xs text-rose-400 hover:text-rose-300 underline font-medium">Speicher leeren</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- NEUE SEKTIONEN: Top 11 & Players to Watch -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            
+            <!-- Sektion 3: Team of the Week (Top 11) -->
+            <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-2 text-emerald-400 flex items-center gap-2">
+                        <span>🏆</span> Spieltags-Top-11 (Team of the Week)
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-4">Die stärkste Aufstellung für den kommenden Spieltag.</p>
+                    <div id="totwOutput" class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-sm text-slate-300 h-64 overflow-y-auto whitespace-pre-line leading-relaxed">
+                        Klicke auf den Button unten, um das Top-11 Team generieren zu lassen.
+                    </div>
+                </div>
+                <button onclick="fetchTeamOfTheWeek()" class="mt-4 w-full bg-emerald-700 hover:bg-emerald-600 py-3 rounded-xl font-bold transition shadow-lg text-sm flex justify-center items-center gap-2">
+                    <span>⭐</span> Top-11 lokal generieren
+                </button>
+            </div>
+
+            <!-- Sektion 4: Players to Watch -->
+            <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-2 text-amber-400 flex items-center gap-2">
+                        <span>🔭</span> Players to Watch (Geheimwaffen)
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-4">Heisse Transfermarkt-Empfehlungen von deiner lokalen KI.</p>
+                    <div id="ptwOutput" class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-sm text-slate-300 h-64 overflow-y-auto whitespace-pre-line leading-relaxed">
+                        Klicke auf den Button unten, um Transfer-Geheimtipps abzurufen.
+                    </div>
+                </div>
+                <button onclick="fetchPlayersToWatch()" class="mt-4 w-full bg-amber-600 hover:bg-amber-500 py-3 rounded-xl font-bold transition shadow-lg text-sm flex justify-center items-center gap-2">
+                    <span>🔥</span> Players to Watch anzeigen
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            if(localStorage.getItem('kb_ollama_model')) document.getElementById('ollamaModel').value = localStorage.getItem('kb_ollama_model');
+            if(localStorage.getItem('kb_market')) document.getElementById('marketData').value = localStorage.getItem('kb_market');
+            if(localStorage.getItem('kb_local_analysis')) document.getElementById('aiOutput').innerHTML = localStorage.getItem('kb_local_analysis');
+            if(localStorage.getItem('kb_local_totw')) document.getElementById('totwOutput').innerHTML = localStorage.getItem('kb_local_totw');
+            if(localStorage.getItem('kb_local_ptw')) document.getElementById('ptwOutput').innerHTML = localStorage.getItem('kb_local_ptw');
+        };
+
+        function saveOllamaSettings() {
+            localStorage.setItem('kb_ollama_model', document.getElementById('ollamaModel').value.trim());
+            alert('Modell erfolgreich gespeichert!');
+        }
+
+        function clearStorage() {
+            if(confirm('Wirklich alle Daten löschen?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        async function callOllama(promptText, outputElementId, storageKey) {
+            const model = document.getElementById('ollamaModel').value.trim() || 'llama3';
+            const outputDiv = document.getElementById(outputElementId);
+            const statusDiv = document.getElementById('connectionStatus');
+
+            outputDiv.innerHTML = "⏳ Lokale KI (Ollama) rechnet... Das kann je nach PC ein paar Sekunden dauern.";
+            statusDiv.className = "px-2.5 py-1 rounded bg-amber-950 text-amber-300 font-medium";
+            statusDiv.innerHTML = "Status: Berechne lokal...";
+
+            try {
+                const response = await fetch("http://localhost:11434/api/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: model,
+                        prompt: promptText,
+                        stream: false
+                    })
+                });
+
+                if(!response.ok) {
+                    throw new Error("Verbindung zu Ollama fehlgeschlagen. Läuft Ollama auf deinem PC?");
+                }
+
+                const data = await response.json();
+                const reply = data.response;
+                
+                outputDiv.innerHTML = reply;
+                localStorage.setItem(storageKey, reply);
+                
+                statusDiv.className = "px-2.5 py-1 rounded bg-emerald-950 text-emerald-300 font-medium";
+                statusDiv.innerHTML = "Status: Verbunden & Bereit";
+
+            } catch (error) {
+                outputDiv.innerHTML = `<span class="text-rose-400 font-bold">Fehler: ${error.message}<br><br>Hinweis: Stelle sicher, dass Ollama gestartet ist. Falls CORS-Probleme auftreten, starte Ollama im Terminal mit: OLLAMA_ORIGINS="*" ollama serve</span>`;
+                statusDiv.className = "px-2.5 py-1 rounded bg-rose-950 text-rose-300 font-medium";
+                statusDiv.innerHTML = "Status: Fehler";
+            }
+        }
+
+        function analyzeManualData() {
+            const marketData = document.getElementById('marketData').value.trim();
+            if(!marketData) { alert('Bitte füge erst Kader- oder Marktdaten ein.'); return; }
+            
+            const prompt = `Du bist ein genialer Kickbase-Profi und Bundesliga-Experte. Analysiere die folgenden Account- und Marktdaten und gib glasklare Empfehlungen zum Kaufen, Verkaufen und Aufstellen:\n\n${marketData}`;
+            callOllama(prompt, "aiOutput", "kb_local_analysis");
+        }
+
+        function fetchTeamOfTheWeek() {
+            const prompt = "Du bist ein Bundesliga-Statistiker und Kickbase-Taktikexperte. Stelle eine realistische 'Team of the Week' Top-11 für den kommenden Bundesliga-Spieltag im System 3-4-3 oder 4-3-3 zusammen. Nenne pro Position den Spieler, Verein und begründe kurz, warum er exzellente Punkte holen wird.";
+            callOllama(prompt, "totwOutput", "kb_local_totw");
+        }
+
+        function fetchPlayersToWatch() {
+            const prompt = "Du bist ein Transfermarkt-Spezialist für Kickbase. Nenne 4-5 spannende 'Players to Watch' (Geheimtipps, Aufsteiger, Spieler nach Verletzung oder mit leichtem Restprogramm), die man jetzt unbedingt auf dem Transfermarkt verpflichten sollte.";
+            callOllama(prompt, "ptwOutput", "kb_local_ptw");
+        }
+    </script>
+</body>
+</html>
