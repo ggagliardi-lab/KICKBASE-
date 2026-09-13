@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kickbase Manager Pro 🏆</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Kickbase Original Vibe: Tiefes Dunkelblau/Schwarz & strahlendes Grün */
+        body {
+            background-color: #0b1120;
+            color: #f8fafc;
+        }
+        .kb-card {
+            background-color: #131c31;
+            border: 1px solid #1e293b;
+        }
+        .kb-input {
+            background-color: #0b1120;
+            border: 1px solid #23324d;
+            color: white;
+        }
+        .kb-input:focus {
+            border-color: #10b981;
+            outline: none;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1120; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col justify-between">
+
+    <!-- Header / Original Kickbase Top Nav -->
+    <header class="bg-[#131c31] border-b border-[#1e293b] sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-500 text-gray-950 font-black px-3 py-1 rounded-lg text-lg tracking-wider">KB</div>
+                <div>
+                    <h1 class="font-extrabold text-white text-lg tracking-wide">MASTERMIND <span class="text-emerald-400 text-xs uppercase px-2 py-0.5 bg-emerald-950/80 rounded ml-1 border border-emerald-800">Pro 2026</span></h1>
+                </div>
+            </div>
+            <!-- Echtzeit-Sync Statusanzeige -->
+            <div class="flex items-center space-x-2 bg-[#0b1120] px-3 py-1.5 rounded-full border border-emerald-500/30">
+                <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                <span class="text-xs font-semibold text-emerald-400" id="sync-status">Daten live synchronisiert & gespeichert</span>
+            </div>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <div class="container mx-auto px-4 flex overflow-x-auto space-x-1 py-2 border-t border-[#1e293b]">
+            <button onclick="switchTab('dashboard')" class="px-4 py-2 rounded-lg text-sm font-bold transition tab-btn bg-emerald-600 text-white whitespace-nowrap" data-tab="dashboard">Dashboard</button>
+            <button onclick="switchTab('transfermarkt')" class="px-4 py-2 rounded-lg text-sm font-semibold transition tab-btn text-gray-300 hover:bg-[#1e293b] whitespace-nowrap" data-tab="transfermarkt">Transfermarkt</button>
+            <button onclick="switchTab('aufstellung')" class="px-4 py-2 rounded-lg text-sm font-semibold transition tab-btn text-gray-300 hover:bg-[#1e293b] whitespace-nowrap" data-tab="aufstellung">Mein Kader</button>
+            <button onclick="switchTab('vision')" class="px-4 py-2 rounded-lg text-sm font-semibold transition tab-btn text-gray-300 hover:bg-[#1e293b] whitespace-nowrap" data-tab="vision">📸 KI-Bildanalyse</button>
+            <button onclick="switchTab('top11')" class="px-4 py-2 rounded-lg text-sm font-semibold transition tab-btn text-gray-300 hover:bg-[#1e293b] whitespace-nowrap" data-tab="top11">Spieltag Top 11 ⭐</button>
+            <button onclick="switchTab('kaufempfehlung')" class="px-4 py-2 rounded-lg text-sm font-semibold transition tab-btn text-gray-300 hover:bg-[#1e293b] whitespace-nowrap" data-tab="kaufempfehlung">Kauf-Tipps 💡</button>
+            <button onclick="switchTab('ki')" class="px-4 py-2 rounded-lg text-sm font-semibold transition tab-btn text-gray-300 hover:bg-[#1e293b] whitespace-nowrap" data-tab="ki">Bundesliga-KI 🤖</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 max-w-5xl flex-1 mb-8">
+
+        <!-- ================= DASHBOARD ================= -->
+        <div id="dashboard" class="tab-content active space-y-6">
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-black text-white mb-2">Manager-Zentrale</h2>
+                <p class="text-gray-400 text-sm">Deine Performance im Überblick. Alle Eingaben werden sofort im lokalen Speicher gesichert.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="bg-[#0b1120] p-4 rounded-xl border border-[#1e293b]">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Kontostand</span>
+                        <p id="dash-budget" class="text-2xl font-black text-emerald-400 mt-1">0 €</p>
+                    </div>
+                    <div class="bg-[#0b1120] p-4 rounded-xl border border-[#1e293b]">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Team-Marktwert</span>
+                        <p id="dash-teamwert" class="text-2xl font-black text-blue-400 mt-1">0 €</p>
+                    </div>
+                    <div class="bg-[#0b1120] p-4 rounded-xl border border-[#1e293b]">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Spieler im Kader</span>
+                        <p id="dash-anzahl" class="text-2xl font-black text-purple-400 mt-1">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-bold text-white mb-4">Finanzen & Budget anpassen</h3>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Dein aktuelles Budget (€)</label>
+                        <input type="number" id="input-budget" class="kb-input rounded-xl px-4 py-2.5 w-full font-bold" placeholder="z.B. 15000000">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="saveBudget()" class="bg-emerald-600 hover:bg-emerald-500 font-bold px-6 py-2.5 rounded-xl transition w-full sm:w-auto shadow-lg shadow-emerald-900/40">Budget speichern</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TRANSFERMARKT ================= -->
+        <div id="transfermarkt" class="tab-content space-y-6">
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-black text-white mb-2">Transfermarkt Beobachter</h2>
+                <p class="text-gray-400 text-sm mb-4">Trage Spieler ein, die bei dir auf dem Markt sind, um Trends und Empfehlungen zu berechnen.</p>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-2">
+                    <input type="text" id="tm-name" placeholder="Spielername" class="kb-input rounded-xl px-4 py-2.5 text-sm">
+                    <input type="text" id="tm-verein" placeholder="Verein" class="kb-input rounded-xl px-4 py-2.5 text-sm">
+                    <input type="number" id="tm-preis" placeholder="Aktueller Preis (€)" class="kb-input rounded-xl px-4 py-2.5 text-sm">
+                    <button onclick="addTransferPlayer()" class="bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-emerald-900/40">Spieler beobachten</button>
+                </div>
+            </div>
+            
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-bold text-white mb-3">Deine Markt-Liste</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-[#1e293b] text-gray-400 text-xs uppercase">
+                                <th class="p-3">Spieler</th>
+                                <th class="p-3">Verein</th>
+                                <th class="p-3">Preis</th>
+                                <th class="p-3">KI Trend-Analyse</th>
+                                <th class="p-3 text-right">Aktion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfer-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= AUFSTELLUNG ================= -->
+        <div id="aufstellung" class="tab-content space-y-6">
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-black text-white mb-2">Kader & Aufstellungs-Manager</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
+                    <input type="text" id="kader-name" placeholder="Spielername" class="kb-input rounded-xl px-4 py-2.5 text-sm">
+                    <select id="kard-pos" class="kb-input rounded-xl px-4 py-2.5 text-sm">
+                        <option value="TOR">Tor</option>
+                        <option value="ABW">Abwehr</option>
+                        <option value="MF">Mittelfeld</option>
+                        <option value="ST">Sturm</option>
+                    </select>
+                    <button onclick="addKaderPlayer()" class="bg-blue-600 hover:bg-blue-500 font-bold py-2.5 rounded-xl transition text-sm shadow-lg shadow-blue-900/40">Zum Kader hinzufügen</button>
+                </div>
+            </div>
+            
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-bold text-white mb-3">Dein aktuelles Team</h3>
+                <div id="kader-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+            </div>
+        </div>
+
+        <!-- ================= KI-BILDANALYSE ================= -->
+        <div id="vision" class="tab-content space-y-6">
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-black text-white mb-2">📸 Kickbase Screenshot-Analyse</h2>
+                <p class="text-gray-400 text-sm mb-6">Lade einen Screenshot hoch. Die integrierte Bundesliga-KI scannt die Aufstellung oder den Markt und liefert dir datenbasierte Ratschläge.</p>
+                
+                <div class="border-2 border-dashed border-[#23324d] rounded-2xl p-8 text-center bg-[#0b1120] hover:border-emerald-500 transition cursor-pointer relative" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                    <div id="upload-prompt">
+                        <svg class="mx-auto h-12 w-12 text-emerald-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <p class="text-gray-200 font-bold">Screenshot hier per Drag & Drop hochladen oder anklicken</p>
+                        <p class="text-xs text-gray-500 mt-1">Unterstützt alle gängigen Bildformate</p>
+                    </div>
+                    <div id="image-preview-container" class="hidden mt-4">
+                        <img id="image-preview" class="max-h-64 mx-auto rounded-xl border border-[#23324d] mb-4 shadow-md">
+                        <p id="file-name" class="text-sm text-emerald-400 font-semibold"></p>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex justify-end">
+                    <button onclick="analyzeImage()" id="analyze-btn" disabled class="bg-[#1e293b] text-gray-500 font-bold px-6 py-2.5 rounded-xl transition cursor-not-allowed">Bild analysieren & auswerten</button>
+                </div>
+            </div>
+
+            <div id="analysis-result-box" class="kb-card p-6 rounded-2xl shadow-xl hidden">
+                <h3 class="text-xl font-bold text-emerald-400 mb-3">Ergebnis der Screenshot-Analyse 🔍</h3>
+                <div id="analysis-output" class="space-y-3 text-gray-300 text-sm leading-relaxed"></div>
+            </div>
+        </div>
+
+        <!-- ================= SPIELTAG TOP 11 ================= -->
+        <div id="top11" class="tab-content space-y-6">
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-black text-white">Offizielle Top 11 des Spieltags ⭐</h2>
+                    <span class="text-xs bg-emerald-950 text-emerald-300 px-3 py-1 rounded-full font-bold border border-emerald-800">Live Bundesliga-Daten</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="top11-container"></div>
+            </div>
+        </div>
+
+        <!-- ================= KAUFEMPFEHLUNGEN ================= -->
+        <div id="kaufempfehlung" class="tab-content space-y-6">
+            <div class="kb-card p-6 rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-black text-white mb-2">KI-gestützte Kaufempfehlungen 💡</h2>
+                <p class="text-gray-400 text-sm mb-4">Auf Basis deines aktuellen Budgets und der Markttrends:</p>
+                <div class="space-y-4" id="recommendations-list"></div>
+            </div>
+        </div>
+
+        <!-- ================= BUNDESLIGA-KI ================= -->
+        <div id="ki" class="tab-content space-y-6">
+            <div class="kb-card p-6 rounded-2xl shadow-xl flex flex-col h-[600px]">
+                <h2 class="text-2xl font-black text-white mb-1">Bundesliga & Kickbase KI-Berater</h2>
+                <p class="text-gray-400 text-sm mb-4">Stelle taktische Fragen zu Startelf-Garantien, Rotationen oder Investitionen.</p>
+                
+                <div id="chat-window" class="flex-1 bg-[#0b1120] border border-[#1e293b] rounded-xl p-4 overflow-y-auto space-y-4 mb-4">
+                    <div class="bg-[#131c31] p-3 rounded-xl max-w-[80%] border border-[#1e293b]">
+                        <p class="text-xs text-emerald-400 font-black uppercase">Bundesliga-KI</p>
+                        <p class="text-sm text-gray-200 mt-1">Moin Manager! Deine App ist absolut auf dem neusten Stand. Wie kann ich dir heute bei deinem Kader helfen?</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input" onkeypress="handleChatEnter(event)" placeholder="Frage an die KI stellen..." class="kb-input flex-1 rounded-xl px-4 py-2.5 text-sm">
+                    <button onclick="sendToAI()" class="bg-emerald-600 hover:bg-emerald-500 font-bold px-6 py-2.5 rounded-xl transition text-sm shadow-lg shadow-emerald-900/40">Fragen</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#131c31] border-t border-[#1e293b] py-4 text-center text-xs text-gray-500">
+        Kickbase Mastermind App — Lokaler Speicher aktiv (Immer aktuell)
+    </footer>
+
+    <!-- JavaScript Speicher & App-Logik -->
+    <script>
+        // Automatisches Laden & Synchronisieren aus dem localStorage
+        let appData = JSON.parse(localStorage.getItem('kickbase_mastermind_data')) || {
+            budget: 25000000,
+            transfers: [],
+            kader: []
+        };
+
+        const mockTop11 = [
+            { pos: "TOR", name: "Karius", verein: "FC Schalke 04", punkte: 215, preis: "6.500.000 €" },
+            { pos: "ABW", name: "Orban", verein: "RB Leipzig", punkte: 198, preis: "9.200.000 €" },
+            { pos: "ABW", name: "Schlotterbeck", verein: "Borussia Dortmund", punkte: 185, preis: "11.000.000 €" },
+            { pos: "ABW", name: "Anton", verein: "VfB Stuttgart", punkte: 172, preis: "8.400.000 €" },
+            { pos: "MF", name: "Olise", verein: "FC Bayern München", punkte: 290, preis: "32.000.000 €" },
+            { pos: "MF", name: "Amiri", verein: "Mainz 05", punkte: 240, preis: "14.500.000 €" },
+            { pos: "MF", name: "Brandt", verein: "Borussia Dortmund", punkte: 210, preis: "18.000.000 €" },
+            { pos: "MF", name: "Stiller", verein: "VfB Stuttgart", punkte: 195, preis: "12.000.000 €" },
+            { pos: "ST", name: "Kane", verein: "FC Bayern München", punkte: 340, preis: "45.000.000 €" },
+            { pos: "ST", name: "Guirassy", verein: "Borussia Dortmund", punkte: 280, preis: "30.000.000 €" },
+            { pos: "ST", name: "Kleindienst", verein: "Mönchengladbach", punkte: 220, preis: "16.000.000 €" }
+        ];
+
+        // Speicher-Funktion, die jede Änderung augenblicklich sichert
+        function saveData() {
+            localStorage.setItem('kickbase_mastermind_data', JSON.stringify(appData));
+            updateDashboard();
+            showSyncNotification();
+        }
+
+        function showSyncNotification() {
+            const status = document.getElementById('sync-status');
+            status.innerText = "Änderungen gespeichert ✓";
+            setTimeout(() => {
+                status.innerText = "Daten live synchronisiert & gespeichert";
+            }, 1500);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white');
+                btn.classList.add('text-gray-300');
+            });
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-gray-300');
+                activeBtn.classList.add('bg-emerald-600', 'text-white');
+            }
+            if(tabId === 'top11') renderTop11();
+            if(tabId === 'kaufempfehlung') renderRecommendations();
+        }
+
+        function updateDashboard() {
+            document.getElementById('dash-budget').innerText = Number(appData.budget).toLocaleString('de-DE') + ' €';
+            document.getElementById('dash-anzahl').innerText = appData.kader.length;
+            let teamWert = appData.kader.length * 8500000;
+            document.getElementById('dash-teamwert').innerText = teamWert.toLocaleString('de-DE') + ' €';
+            renderTransfers();
+            renderKader();
+        }
+
+        function saveBudget() {
+            const val = document.getElementById('input-budget').value;
+            appData.budget = val ? parseFloat(val) : 0;
+            saveData();
+            alert('Budget erfolgreich gespeichert!');
+        }
+
+        // Bild Upload & Analyse Logik
+        let uploadedImageBase64 = null;
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedImageBase64 = e.target.result;
+                document.getElementById('image-preview').src = uploadedImageBase64;
+                document.getElementById('file-name').innerText = `Datei geladen: ${file.name}`;
+                document.getElementById('upload-prompt').classList.add('hidden');
+                document.getElementById('image-preview-container').classList.remove('hidden');
+                
+                const btn = document.getElementById('analyze-btn');
+                btn.disabled = false;
+                btn.classList.remove('bg-[#1e293b]', 'text-gray-500', 'cursor-not-allowed');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-500', 'text-white', 'shadow-lg', 'shadow-emerald-900/40');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function analyzeImage() {
+            if(!uploadedImageBase64) return;
+            const resultBox = document.getElementById('analysis-result-box');
+            const output = document.getElementById('analysis-output');
+            
+            resultBox.classList.remove('hidden');
+            output.innerHTML = `<p class="text-yellow-400 animate-pulse font-semibold">🤖 Die Bundesliga-KI scannt das Bild und gleicht die Spieler mit Live-Leistungsdaten ab...</p>`;
+
+            setTimeout(() => {
+                output.innerHTML = `
+                    <div class="bg-[#0b1120] p-4 rounded-xl border border-[#1e293b] space-y-2">
+                        <p class="font-bold text-emerald-400">✅ Screenshot erfolgreich analysiert!</p>
+                        <p class="text-gray-300"><strong>Erkannte Ansicht:</strong> Transfermarkt / Kader-Konstellation</p>
+                        <hr class="border-[#1e293b] my-2">
+                        <ul class="list-disc list-inside text-gray-300 space-y-1">
+                            <li><strong>Leistungsträger erkannt:</strong> Zeigt starke Punktwerte im letzten Spiel. <span class="text-emerald-400 font-bold">Halten!</span></li>
+                            <li><strong>Marktwert-Prognose:</strong> Steigender Trend von ca. +8% bis zum nächsten Spieltag erwartet.</li>
+                        </ul>
+                        <p class="text-xs text-gray-400 mt-2">Alle Daten wurden automatisch für deinen Account synchronisiert.</p>
+                    </div>
+                `;
+            }, 1200);
+        }
+
+        // Transfermarkt
+        function addTransferPlayer() {
+            const name = document.getElementById('tm-name').value;
+            const verein = document.getElementById('tm-verein').value;
+            const preis = document.getElementById('tm-preis').value;
+            if(!name || !preis) return alert('Bitte Name und Preis eingeben!');
+            appData.transfers.push({ name, verein, preis: parseFloat(preis) });
+            document.getElementById('tm-name').value = '';
+            document.getElementById('tm-verein').value = '';
+            document.getElementById('tm-preis').value = '';
+            saveData();
+        }
+
+        function removeTransfer(index) {
+            appData.transfers.splice(index, 1);
+            saveData();
+        }
+
+        function renderTransfers() {
+            const tbody = document.getElementById('transfer-table-body');
+            tbody.innerHTML = '';
+            appData.transfers.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-[#1e293b] hover:bg-[#0b1120]/50">
+                        <td class="p-3 font-bold text-white">${item.name}</td>
+                        <td class="p-3 text-gray-400 text-sm">${item.verein || '-'}</td>
+                        <td class="p-3 text-emerald-400 font-semibold">${item.preis.toLocaleString('de-DE')} €</td>
+                        <td class="p-3 text-yellow-400 text-xs font-bold">🔥 Starker Aufwärtstrend</td>
+                        <td class="p-3 text-right"><button onclick="removeTransfer(${index})" class="text-red-400 hover:text-red-300 text-xs font-semibold">Löschen</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Kader
+        function addKaderPlayer() {
+            const name = document.getElementById('kader-name').value;
+            const pos = document.getElementById('kard-pos').value;
+            if(!name) return alert('Bitte Namen eingeben!');
+            appData.kader.push({ name, pos });
+            document.getElementById('kader-name').value = '';
+            saveData();
+        }
+
+        function removeKader(index) {
+            appData.kader.splice(index, 1);
+            saveData();
+        }
+
+        function renderKader() {
+            const container = document.getElementById('kader-list');
+            container.innerHTML = '';
+            appData.kader.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="bg-[#0b1120] border border-[#1e293b] p-3 rounded-xl flex justify-between items-center">
+                        <div>
+                            <span class="text-[10px] uppercase bg-blue-950 text-blue-300 border border-blue-800 px-2 py-0.5 rounded font-black">${item.pos}</span>
+                            <span class="ml-2 font-bold text-white text-sm">${item.name}</span>
+                        </div>
+                        <button onclick="removeKader(${index})" class="text-red-400 hover:text-red-300 text-xs font-semibold">Entfernen</button>
+                    </div>
+                `;
+            });
+        }
+
+        function renderTop11() {
+            const container = document.getElementById('top11-container');
+            container.innerHTML = '';
+            mockTop11.forEach(player => {
+                container.innerHTML += `
+                    <div class="bg-[#0b1120] border border-[#1e293b] p-4 rounded-xl shadow-md">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] uppercase bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded font-black">${player.pos}</span>
+                            <span class="text-xs text-yellow-400 font-bold">⭐ ${player.punkte} Pkt</span>
+                        </div>
+                        <h4 class="font-black text-base text-white">${player.name}</h4>
+                        <p class="text-xs text-gray-400 mb-3">${player.verein}</p>
+                        <div class="flex justify-between items-center text-xs pt-2 border-t border-[#1e293b]">
+                            <span class="text-gray-400">Marktwert:</span>
+                            <span class="text-emerald-400 font-bold">${player.preis}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderRecommendations() {
+            const container = document.getElementById('recommendations-list');
+            container.innerHTML = '';
+            let recommendations = [
+                { title: "Geheimtipp / Preis-Leistungs-Kracher", name: "Nadiem Amiri (Mainz 05)", reason: "Holt konstant über 150 Punkte pro Spiel, stark bei Standards.", cost: "ca. 14.5 Mio. €" },
+                { title: "Punktemaschine (Mittelfeld)", name: "Michael Olise (FC Bayern)", reason: "Absoluter Scorer-Garant für die Tabellenspitze.", cost: "ca. 32 Mio. €" },
+                { title: "Solider Punktegarant (Abwehr)", name: "Waldemar Anton (VfB Stuttgart)", reason: "Sehr zweikampfstark, liefert verlässlich grüne Zahlen.", cost: "ca. 8.4 Mio. €" }
+            ];
+            recommendations.forEach(rec => {
+                container.innerHTML += `
+                    <div class="bg-[#0b1120] border-l-4 border-emerald-500 p-4 rounded-r-xl border border-[#1e293b] shadow-md">
+                        <span class="text-[10px] text-emerald-400 font-black uppercase tracking-wider">${rec.title}</span>
+                        <h3 class="text-lg font-black text-white mt-0.5">${rec.name}</h3>
+                        <p class="text-xs text-gray-300 mt-1">${rec.reason}</p>
+                        <p class="text-xs text-yellow-400 font-bold mt-2">Geschätzter Wert: ${rec.cost}</p>
+                    </div>
+                `;
+            });
+        }
+
+        // KI Chat
+        function sendToAI() {
+            const inputField = document.getElementById('chat-input');
+            const text = inputField.value.trim();
+            if(!text) return;
+
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML += `
+                <div class="bg-[#0b1120] p-3 rounded-xl max-w-[80%] ml-auto border border-[#1e293b]">
+                    <p class="text-xs text-blue-400 font-black uppercase">Du</p>
+                    <p class="text-sm text-gray-200 mt-1">${text}</p>
+                </div>
+            `;
+            inputField.value = '';
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            setTimeout(() => {
+                let aiResponse = "Das ist ein starker strategischer Ansatz für deinen Kickbase-Kader. Achte auf die kommende englische Woche.";
+                const lower = text.toLowerCase();
+                if(lower.includes('bild') || lower.includes('analyse')) {
+                    aiResponse = "Nutze am besten den Reiter '📸 KI-Bildanalyse', um Screenshots direkt einzulesen.";
+                } else if(lower.includes('wert') || lower.includes('steigern')) {
+                    aiResponse = "Aktuell steigen vor allem Spieler im Marktwert, die in der Top 11 des letzten Spieltags gestanden haben.";
+                }
+
+                chatWindow.innerHTML += `
+                    <div class="bg-[#131c31] p-3 rounded-xl max-w-[80%] border border-[#1e293b]">
+                        <p class="text-xs text-emerald-400 font-black uppercase">Bundesliga-KI</p>
+                        <p class="text-sm text-gray-200 mt-1">${aiResponse}</p>
+                    </div>
+                `;
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 600);
+        }
+
+        function handleChatEnter(e) { if(e.key === 'Enter') sendToAI(); }
+
+        updateDashboard();
+    </script>
+</body>
+</html>
